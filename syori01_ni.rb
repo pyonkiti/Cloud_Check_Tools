@@ -1,7 +1,7 @@
 #! /usr/local/rbenv/shims/ruby
 # -*- mode:ruby; coding:utf-8 -*-
 #
-# テストSVでcheckstateテーブルのresultを全データに対し0に更新する処理です。
+# テストSVでcheckstateテーブルのresultを全データに対し0に更新する処理です
 # 《使い方》
 #   1) テストSVの /home/sofinet に移動
 #   2) ruby syori01_ni.rb を実行 (引数の指定はなし)
