@@ -1,7 +1,7 @@
 #! /usr/local/rbenv/shims/ruby
 # -*- mode:ruby; coding:utf-8 -*-
 #
-# テストSVから、ユーザーコードと施設コードを指定して、scodelistテーブルのdeadをFalse→Trueに更新する処理です
+# テストSVから、ユーザーコードと施設コードを指定して、scodelistテーブルのdeadをFalse→Trueに更新する処理です.
 # 
 # 《使い方》
 #   1) テストSVの /home/sofinet に移動
