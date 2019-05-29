@@ -17,24 +17,23 @@ require 'yaml'
 # ---------------------------------------------------------------------------------------------
 class DB_TesCon
 
-	def initialize
+    def initialize
 
-		@userid   = nil						# ユーザーコード
-		@fscode   = nil						# 施設コード
-		get_yaml
-	end
+        @userid   = nil                     # ユーザーコード
+        @fscode   = nil                     # 施設コード
+        get_yaml
+    end
 	
-	# ---------------------------------------------------------------------------------------------
-	# scodelistテーブルを更新
-	def update_scode(_tbl)
-		
-		# テスト/本番 テーブル名切り分け
-		_tbl = case _tbl
-			when :tst then "scodelist_test"
-			when :hon then "scodelist"
-　　　　 end
+    # ---------------------------------------------------------------------------------------------
+    # scodelistテーブルを更新
+    def update_scode(_tbl)
+            # テスト/本番 テーブル名切り分け
+        _tbl = case _tbl
+            when :tst then "scodelist_test"
+            when :hon then "scodelist"
+            end
 
-		begin
+            begin
             # PostgreSQL(テスト)に接続
             connection = PG::connect(:host => @pghost, :user => @pguser, :password => @pgpasswd, :dbname => @pgdbname)
             
@@ -42,71 +41,70 @@ class DB_TesCon
             _sql = "Select userid, fscode, dead From #{_tbl} Where userid = \'#{@userid}\' And fscode = \'#{@fscode}\' "
             _res = connection.exec(_sql)
 
-			if _res.ntuples.zero?
+            if _res.ntuples.zero?
                 _msg = "scodelistに該当のデータが存在しません"
-			else
-				_dead = nil
-				_res.each {|_rec| _dead = _rec['dead']}
+            else
+                _dead = nil
+                _res.each {|_rec| _dead = _rec['dead']}
 
-				if _dead.to_s == "t"
-					_msg = "scodelistでdead=Tになっているため、更新は行われません"
-				else
-					_sql = "Update #{_tbl} Set dead = true Where userid = \'#{@userid}\' And fscode = \'#{@fscode}\'"
-					connection.exec(_sql)
+                if _dead.to_s == "t"
+                    _msg = "scodelistでdead=Tになっているため、更新は行われません"
+                else
+                    _sql = "Update #{_tbl} Set dead = true Where userid = \'#{@userid}\' And fscode = \'#{@fscode}\'"
+                    connection.exec(_sql)
 
-					_argv1 = "#{@userid.to_i},#{@fscode.to_i}"
-					_argv2 = _argv1.split(",").map(&:to_i)
-					_msg = "#{_argv2}" + " scodelistのdeadをF→Tに更新しました"
-				end
-			end
+                    _argv1 = "#{@userid.to_i},#{@fscode.to_i}"
+                    _argv2 = _argv1.split(",").map(&:to_i)
+                    _msg = "#{_argv2}" + " scodelistのdeadをF→Tに更新しました"
+                end
+            end
 
-			unless _msg.nil?
-				puts _msg 
-				return :NG
-			end
+            unless _msg.nil?
+                puts _msg 
+                return :NG
+            end
 
-			return :OK
-		rescue => ex
-			print "***** " + self.class.name.to_s + "." + __method__.to_s + " *****\n"
-			print(ex.class," -> ",ex.message," --> ",ex.backtrace)
-			return :NG
-		ensure
-			connection.finish
-		end
-	end	
+            return :OK
+        rescue => ex
+            print "***** " + self.class.name.to_s + "." + __method__.to_s + " *****\n"
+            print(ex.class," -> ",ex.message," --> ",ex.backtrace)
+            return :NG
+        ensure
+            connection.finish
+        end
+    end	
 	
 	# ---------------------------------------------------------------------------------------------
 	# 引数入力の妥当性チェック
-	def check_argv(_argv)
+    def check_argv(_argv)
 
-		if _argv.empty?
-			_msg = "引数が設定されていません"
-		else
-			if _argv[0].to_s.slice(/^[0-9]+,[0-9]+$/).nil?
-				_msg = "引数の型が正しくありません  「ユーザーコード,施設コード」で指定して下さい"
-			end
-		end
-		
-		if _msg.nil?
-			@userid = _argv[0].to_s.split(",")[0]			# ユーザーコード
-			@fscode = _argv[0].to_s.split(",")[1]			# 施設コード
-			return :OK
-		else
-			puts _msg
-			return :NG
-		end
-	end
+        if _argv.empty?
+            _msg = "引数が設定されていません"
+        else
+            if _argv[0].to_s.slice(/^[0-9]+,[0-9]+$/).nil?
+                _msg = "引数の型が正しくありません  「ユーザーコード,施設コード」で指定して下さい"
+            end
+        end
+
+        if _msg.nil?
+            @userid = _argv[0].to_s.split(",")[0]           # ユーザーコード
+            @fscode = _argv[0].to_s.split(",")[1]           # 施設コード
+            return :OK
+        else
+            puts _msg
+            return :NG
+        end
+    end
 
 	# ---------------------------------------------------------------------------------------------
 	# YAMLファイルからパラメータを取得
     def get_yaml
-        
         yml = YAML.load_file("./sofit_config.yml")
         hash = yml.fetch("databese_test")
 
-    	@pghost   = hash.fetch("host")
-    	@pguser   = hash.fetch("user")
-    	@pgpasswd = hash.fetch("passwd")
+        @pghost   = hash.fetch("host")
+        @pguser   = hash.fetch("user")
+        @pgpasswd = hash.fetch("passwd")
         @pgdbname = hash.fetch("dbname")
     end
 end
@@ -123,5 +121,4 @@ exit(0) if udb.check_argv(ARGV) == :NG
 
 # scodelistの更新(本番 :hon / テスト :tst)
 udb.update_scode(:hon)
-
 exit(0)
