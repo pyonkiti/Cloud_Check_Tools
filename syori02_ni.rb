@@ -1,7 +1,7 @@
 #! /usr/local/rbenv/shims/ruby
 # -*- mode:ruby; coding:utf-8 -*-
 #
-# テストSVから、ユーザーコードと施設コードを指定して、scodelistテーブルのdeadをFalse→Trueに更新する処理です.
+# テストSVから、ユーザーコードと施設コードを指定して、scodelistテーブルのdeadをFalse→Trueに更新する処理です
 # 
 # 《使い方》
 #   1) テストSVの /home/sofinet に移動
@@ -32,18 +32,18 @@ class DB_TesCon
 		_tbl = case _tbl
 			when :tst then "scodelist_test"
 			when :hon then "scodelist"
-		end
+　　　　 end
 
 		begin
             # PostgreSQL(テスト)に接続
-		    connection = PG::connect(:host => @pghost, :user => @pguser, :password => @pgpasswd, :dbname => @pgdbname)
+            connection = PG::connect(:host => @pghost, :user => @pguser, :password => @pgpasswd, :dbname => @pgdbname)
             
             # scodelistテーブルを検索
-			_sql = "Select userid, fscode, dead From #{_tbl} Where userid = \'#{@userid}\' And fscode = \'#{@fscode}\' "
+            _sql = "Select userid, fscode, dead From #{_tbl} Where userid = \'#{@userid}\' And fscode = \'#{@fscode}\' "
             _res = connection.exec(_sql)
 
 			if _res.ntuples.zero?
-				_msg = "scodelistに該当のデータが存在しません"
+                _msg = "scodelistに該当のデータが存在しません"
 			else
 				_dead = nil
 				_res.each {|_rec| _dead = _rec['dead']}
