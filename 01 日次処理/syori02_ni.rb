@@ -7,7 +7,8 @@
 #   1) テストSVの /home/sofinet に移動
 #   2) ruby syori02_ni.rb を実行 (引数は「ユーザーコード,施設コード」の形式で入力して下さい)
 #      例） syori02_ni.rb 1,3
-#
+#   3) -dまたは、-dispオプションをつけると、scodelistのdeadの状態を表示します
+#      例)  syori02_ni.rb 1,3 -disp
 
 require 'pg'
 require 'yaml'
@@ -19,21 +20,24 @@ class DB_TesCon
 
     def initialize
 
-        @userid   = nil                     # ユーザーコード
-        @fscode   = nil                     # 施設コード
+        @has_option = {'d1' => '-disp', 'd2' => '-d', 't1' => '-test', 't2' => '-t'}
+        @userid     = nil                     # ユーザーコード
+        @fscode     = nil                     # 施設コード
+        @arg_option = nil                     # オプション
         get_yaml
     end
 	
     # ---------------------------------------------------------------------------------------------
     # scodelistテーブルを更新
     def update_scode(_tbl)
-            # テスト/本番 テーブル名切り分け
+
+        # テスト/本番 テーブル名切り分け
         _tbl = case _tbl
             when :tst then "scodelist_test"
             when :hon then "scodelist"
-            end
+        end
 
-            begin
+        begin
             # PostgreSQL(テスト)に接続
             connection = PG::connect(:host => @pghost, :user => @pguser, :password => @pgpasswd, :dbname => @pgdbname)
             
@@ -47,15 +51,26 @@ class DB_TesCon
                 _dead = nil
                 _res.each {|_rec| _dead = _rec['dead']}
 
-                if _dead.to_s == "t"
-                    _msg = "scodelistでdead=Tになっているため、更新は行われません"
-                else
-                    _sql = "Update #{_tbl} Set dead = true Where userid = \'#{@userid}\' And fscode = \'#{@fscode}\'"
-                    connection.exec(_sql)
+                _argv1 = "#{@userid.to_i},#{@fscode.to_i}"
+                _argv2 = _argv1.split(",").map(&:to_i)
 
-                    _argv1 = "#{@userid.to_i},#{@fscode.to_i}"
-                    _argv2 = _argv1.split(",").map(&:to_i)
-                    _msg = "#{_argv2}" + " scodelistのdeadをF→Tに更新しました"
+                # オプション指定がない場合は更新する
+                if @arg_option.nil?
+                    if _dead.to_s == "t"
+                        _msg = "scodelistでdead=Tになっているため、更新は行われません"
+                    else
+                        _sql = "Update #{_tbl} Set dead = true Where userid = \'#{@userid}\' And fscode = \'#{@fscode}\'"
+                        connection.exec(_sql)
+
+                        _msg = "#{_argv2}" + " scodelistのdeadをF→Tに更新しました"
+                    end
+                else
+                    case @arg_option
+                        when 'd'
+                            _msg = "#{_argv2}" + " scodelistのdeadの状態は " + "#{_dead.to_s}" + " です"
+                        when 't'
+                            _msg = "#{_argv2}" + " テスト文言の表示だけです"
+                    end
                 end
             end
 
@@ -64,7 +79,7 @@ class DB_TesCon
                 return :NG
             end
 
-            return :OK
+        return :OK
         rescue => ex
             print "***** " + self.class.name.to_s + "." + __method__.to_s + " *****\n"
             print(ex.class," -> ",ex.message," --> ",ex.backtrace)
@@ -83,6 +98,14 @@ class DB_TesCon
         else
             if _argv[0].to_s.slice(/^[0-9]+,[0-9]+$/).nil?
                 _msg = "引数の型が正しくありません  「ユーザーコード,施設コード」で指定して下さい"
+            end
+            if _argv[1].to_s.empty?
+            else
+                if @has_option.value?(_argv[1].to_s)
+                    @arg_option = @has_option.invert[_argv[1].to_s][0]  # オプションの種類
+                else
+                    _msg = "オプションの指定に誤りがあります"
+                end
             end
         end
 
